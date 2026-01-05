@@ -1,0 +1,14 @@
+.DS_Store
+.vscode/
+
+# Laravel
+backend/vendor/
+backend/.env
+backend/storage/*.key
+
+# Node
+node-api/node_modules/
+node-api/.env
+
+# Optional (if you have it)
+backend/storage/logs/*.log
