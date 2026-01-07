@@ -95,7 +95,7 @@ class ReservationController extends Controller
         $selectedTable = null;
         if (!empty($validated['table_id'])) {
             $selectedTable = Table::findOrFail($validated['table_id']);
-            $zoneToCheck = $selectedTable->zone; // interior/esplanada/palco/outro (na tua migration: interior/esplanada/palco/outro)
+            $zoneToCheck = $selectedTable->zone; // interior/esplanada/palco/outro
         }
 
         $hasBlock = Block::whereDate('date', $date->toDateString())
@@ -105,8 +105,7 @@ class ReservationController extends Controller
 
                 // e bloqueios específicos da zona (se não for global)
                 if (!empty($zoneToCheck) && $zoneToCheck !== 'global') {
-                    // Se a tua tabela "tables.zone" tem "outro", no blocks não existe "outro".
-                    // Nesse caso, só valida global.
+                    // blocks não tem "outro"
                     if (in_array($zoneToCheck, ['interior', 'esplanada', 'palco'], true)) {
                         $q->orWhere('zone', $zoneToCheck);
                     }
@@ -252,12 +251,16 @@ class ReservationController extends Controller
     // 🔒 Backoffice: lista de reservas com filtros
     public function index(Request $request)
     {
-        $selectedDate = $request->input('date') ?? now()->toDateString();
+        $selectedDate    = $request->input('date');      // ✅ sem default (mostra todas ao abrir)
         $selectedEventId = $request->input('event_id');
         $selectedStatus  = $request->input('status');
 
-        $query = Reservation::with(['table', 'event'])
-            ->whereDate('date', $selectedDate);
+        $query = Reservation::with(['table', 'event']);
+
+        // ✅ Só filtra por data se o utilizador escolher
+        if (!empty($selectedDate)) {
+            $query->whereDate('date', $selectedDate);
+        }
 
         if (!empty($selectedEventId)) {
             $query->where('event_id', $selectedEventId);
@@ -268,6 +271,7 @@ class ReservationController extends Controller
         }
 
         $reservations = $query
+            ->orderBy('date')
             ->orderBy('time')
             ->get();
 
@@ -284,12 +288,12 @@ class ReservationController extends Controller
         ];
 
         return view('reservations.index', [
-            'reservations'     => $reservations,
-            'selectedDate'     => $selectedDate,
-            'events'           => $events,
-            'selectedEventId'  => $selectedEventId,
-            'statuses'         => $statuses,
-            'selectedStatus'   => $selectedStatus,
+            'reservations'    => $reservations,
+            'selectedDate'    => $selectedDate, // pode ser null
+            'events'          => $events,
+            'selectedEventId' => $selectedEventId,
+            'statuses'        => $statuses,
+            'selectedStatus'  => $selectedStatus,
         ]);
     }
 
@@ -320,10 +324,11 @@ class ReservationController extends Controller
         ]);
 
         // 🔹 Se passou a "confirmed" e tem email, enviar notificação
-        if ($oldStatus !== 'confirmed'
+        if (
+            $oldStatus !== 'confirmed'
             && $reservation->status === 'confirmed'
-            && $reservation->customer_email) {
-
+            && $reservation->customer_email
+        ) {
             try {
                 Mail::to($reservation->customer_email)
                     ->send(new ReservationConfirmedMail($reservation));
@@ -360,6 +365,64 @@ class ReservationController extends Controller
             ->with('success', 'Estado atualizado com sucesso.');
     }
 
+    // 🔒 Backoffice: histórico da reserva (logs no Mongo via Node API)
+    public function history(Reservation $reservation)
+    {
+        $logs = [];
+
+        $baseUrl = env('NODE_API_URL');
+        $apiKey  = env('NODE_API_KEY');
+
+        if (!$baseUrl || !$apiKey) {
+            return view('reservations.history', [
+                'reservation' => $reservation->load(['table', 'event', 'user']),
+                'logs' => $logs,
+                'error' => 'NODE_API_URL/NODE_API_KEY não configurados.',
+            ]);
+        }
+
+        try {
+            $response = Http::timeout(3)
+                ->withHeaders([
+                    'x-api-key' => $apiKey,
+                    'accept' => 'application/json',
+                ])
+                ->get(rtrim($baseUrl, '/') . '/api/logs/' . $reservation->id);
+
+            if ($response->successful()) {
+                $logs = $response->json('logs') ?? [];
+            } else {
+                Log::warning('Node API history request failed', [
+                    'reservation_id' => $reservation->id,
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                ]);
+
+                return view('reservations.history', [
+                    'reservation' => $reservation->load(['table', 'event', 'user']),
+                    'logs' => $logs,
+                    'error' => 'Não foi possível obter histórico (Node API respondeu com erro).',
+                ]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Failed to fetch reservation history: ' . $e->getMessage(), [
+                'reservation_id' => $reservation->id,
+            ]);
+
+            return view('reservations.history', [
+                'reservation' => $reservation->load(['table', 'event', 'user']),
+                'logs' => $logs,
+                'error' => 'Não foi possível ligar ao Node API.',
+            ]);
+        }
+
+        return view('reservations.history', [
+            'reservation' => $reservation->load(['table', 'event', 'user']),
+            'logs' => $logs,
+            'error' => null,
+        ]);
+    }
+
     /**
      * Envia logs para o Node API (Mongo) sem quebrar o fluxo da aplicação.
      */
@@ -370,10 +433,15 @@ class ReservationController extends Controller
             return; // se não estiver configurado, ignora silenciosamente
         }
 
+        $apiKey = env('NODE_API_KEY');
+        if (!$apiKey) {
+            return; // sem chave, não envia
+        }
+
         try {
             Http::timeout(2)
                 ->withHeaders([
-                    'x-api-key' => env('NODE_API_KEY'),
+                    'x-api-key' => $apiKey,
                     'accept' => 'application/json',
                 ])
                 ->post(rtrim($baseUrl, '/') . '/api/logs', $payload);

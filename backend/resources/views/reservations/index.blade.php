@@ -123,6 +123,12 @@
             gap: .3rem;
         }
 
+        .filter-card .btn-secondary {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-main);
+        }
+
         .pill {
             font-size: .75rem;
             color: var(--text-muted);
@@ -307,7 +313,13 @@
                 <span class="badge-dot"></span>
                 <span>Backoffice · Reservas</span>
             </div>
-            <h1>Reservas para {{ \Illuminate\Support\Carbon::parse($selectedDate)->format('d/m/Y') }}</h1>
+
+            @if(!empty($selectedDate))
+                <h1>Reservas para {{ \Illuminate\Support\Carbon::parse($selectedDate)->format('d/m/Y') }}</h1>
+            @else
+                <h1>Todas as reservas</h1>
+            @endif
+
             <p>Vista interna das reservas do Union Sports &amp; Culture. Usa os filtros para refinar.</p>
         </div>
     </div>
@@ -315,7 +327,7 @@
     <form method="GET" action="{{ route('reservations.index') }}" class="filter-card">
         <div class="filter-group">
             <label for="date">Data</label>
-            <input type="date" id="date" name="date" value="{{ $selectedDate }}">
+            <input type="date" id="date" name="date" value="{{ $selectedDate ?? '' }}">
         </div>
 
         <div class="filter-group">
@@ -346,9 +358,15 @@
             </select>
         </div>
 
-        <button type="submit">
-            Filtrar
-        </button>
+        <button type="submit">Filtrar</button>
+
+        {{-- Botão limpar filtros (só aparece se houver algum filtro ativo) --}}
+        @if(!empty($selectedDate) || !empty($selectedEventId) || !empty($selectedStatus))
+            <a href="{{ route('reservations.index') }}" class="filter-card button btn-secondary"
+               style="text-decoration:none; text-align:center;">
+                Limpar filtros
+            </a>
+        @endif
 
         <div class="pill">
             Total: {{ $reservations->count() }} reserva(s)
@@ -364,6 +382,7 @@
             <table>
                 <thead>
                 <tr>
+                    <th>Data</th>
                     <th>Hora</th>
                     <th>Cliente</th>
                     <th>Contacto</th>
@@ -377,6 +396,9 @@
                 <tbody>
                 @foreach ($reservations as $reservation)
                     <tr>
+                        <td class="nowrap" data-label="Data">
+                            {{ \Illuminate\Support\Carbon::parse($reservation->date)->format('d/m/Y') }}
+                        </td>
                         <td class="nowrap" data-label="Hora">
                             {{ \Illuminate\Support\Carbon::parse($reservation->time)->format('H:i') }}
                         </td>

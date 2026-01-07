@@ -49,6 +49,10 @@ Route::middleware('auth')->group(function () {
 
     Route::post('/admin/reservas/{reservation}/estado', [ReservationController::class, 'updateStatus'])
         ->name('reservations.updateStatus');
+
+    // ✅ NOVO: histórico (audit logs via Node API + Mongo)
+    Route::get('/admin/reservas/{reservation}/historico', [ReservationController::class, 'history'])
+        ->name('reservations.history');
 });
 
 
@@ -64,6 +68,8 @@ Route::middleware(['auth', 'isAdmin'])->group(function () {
     Route::get('/admin/mesas/{table}/editar', [TableController::class, 'edit'])->name('admin.tables.edit');
     Route::put('/admin/mesas/{table}', [TableController::class, 'update'])->name('admin.tables.update');
     Route::delete('/admin/mesas/{table}', [TableController::class, 'destroy'])->name('admin.tables.destroy');
+    
+    Route::get('/admin/reservas/{reservation}/historico', [ReservationController::class, 'history'])->name('reservations.history');
 
     Route::get('/admin/eventos', [EventController::class, 'index'])->name('admin.events.index');
     Route::get('/admin/eventos/criar', [EventController::class, 'create'])->name('admin.events.create');
@@ -73,4 +79,4 @@ Route::middleware(['auth', 'isAdmin'])->group(function () {
     Route::delete('/admin/eventos/{event}', [EventController::class, 'destroy'])->name('admin.events.destroy');
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

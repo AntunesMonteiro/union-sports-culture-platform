@@ -10,5 +10,4 @@ backend/storage/*.key
 node-api/node_modules/
 node-api/.env
 
-# Optional (if you have it)
 backend/storage/logs/*.log

@@ -63,7 +63,7 @@
       </div>
 
       <div class="uc-image-card">
-        <img src="{{ asset('union/img/about-union.png') }}" alt="Interior do Union Sports & Culture">
+        <img src="{{ asset('union/img/barUnion.jpg') }}" alt="Interior do Union Sports & Culture">
       </div>
     </div>
   </section>
