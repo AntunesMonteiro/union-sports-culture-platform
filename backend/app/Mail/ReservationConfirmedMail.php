@@ -13,17 +13,12 @@ class ReservationConfirmedMail extends Mailable
 
     public Reservation $reservation;
 
-    /**
-     * Create a new message instance.
-     */
+    //Criar msg
     public function __construct(Reservation $reservation)
     {
         $this->reservation = $reservation;
     }
 
-    /**
-     * Build the message.
-     */
     public function build()
     {
         return $this->subject('Reserva confirmada - Union Sports & Culture')

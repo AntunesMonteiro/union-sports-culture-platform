@@ -6,15 +6,12 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
 {
     Schema::create('reservations', function (Blueprint $table) {
         $table->id();
 
-        // Cliente associado à reserva (se tiver conta)
+        // Cliente associado à reserva 
         $table->foreignId('user_id')
               ->nullable()
               ->constrained('users')
@@ -67,9 +64,6 @@ return new class extends Migration
     });
 }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('reservations');

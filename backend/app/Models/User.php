@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-// use Laravel\Sanctum\HasApiTokens; // se fores usar API tokens
 
 class User extends Authenticatable
 {
@@ -27,19 +26,19 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
     ];
 
-    // 🔗 Um utilizador pode ter muitas reservas
+    // Um utilizador pode criar reservas
     public function reservations()
     {
         return $this->hasMany(Reservation::class);
     }
 
-    // 🔗 Um utilizador pode ter criado muitos eventos
+    // Um utilizador pode criar muitos eventos
     public function eventsCreated()
     {
         return $this->hasMany(Event::class, 'created_by');
     }
 
-    // 🔗 Um utilizador pode ter criado muitos bloqueios
+    // Um utilizador pode criar muitos bloqueios
     public function blocksCreated()
     {
         return $this->hasMany(Block::class, 'created_by');

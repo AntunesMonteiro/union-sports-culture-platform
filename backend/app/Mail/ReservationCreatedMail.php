@@ -13,17 +13,12 @@ class ReservationCreatedMail extends Mailable
 
     public Reservation $reservation;
 
-    /**
-     * Create a new message instance.
-     */
+    //Criar msg
     public function __construct(Reservation $reservation)
     {
         $this->reservation = $reservation;
     }
 
-    /**
-     * Build the message.
-     */
     public function build(): self
     {
         return $this->subject('Recebemos o teu pedido de reserva')

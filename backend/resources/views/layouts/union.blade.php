@@ -14,8 +14,6 @@
   <header class="uc-header">
     <div class="uc-container">
       <div class="uc-nav">
-
-        <!-- Brand -->
         <a class="uc-brand" href="{{ route('union.home') }}">
           <img
             class="uc-logo"
@@ -29,7 +27,6 @@
           </div>
         </a>
 
-        <!-- Desktop links -->
         <nav class="uc-links">
           <a href="{{ route('union.home') }}#sobre">Sobre</a>
           <a href="{{ route('union.home') }}#sports">Sports</a>
@@ -38,7 +35,6 @@
           <a href="{{ route('union.home') }}#contactos">Contactos</a>
         </nav>
 
-        <!-- Right actions -->
         <div class="uc-nav-actions">
           <a class="uc-social" href="https://www.instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -56,7 +52,6 @@
             </svg>
           </a>
 
-          <!-- Burger -->
           <button class="uc-burger" id="uc-burger" aria-label="Abrir menu">
             <span></span><span></span><span></span>
           </button>

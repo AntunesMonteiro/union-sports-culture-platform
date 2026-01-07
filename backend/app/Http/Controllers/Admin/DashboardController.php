@@ -16,7 +16,7 @@ class DashboardController extends Controller
         $sevenDaysAgo = Carbon::today()->subDays(6); // inclui hoje
         $sevenDaysAhead = Carbon::today()->addDays(7);
 
-        // 📊 Reservas HOJE
+        // Reservas HOJE
         $reservationsTodayQuery = Reservation::whereDate('date', $today);
 
         $reservationsToday = $reservationsTodayQuery
@@ -28,7 +28,7 @@ class DashboardController extends Controller
         $pendingToday   = (clone $reservationsTodayQuery)->where('status', 'pending')->count();
         $confirmedToday = (clone $reservationsTodayQuery)->where('status', 'confirmed')->count();
 
-        // 📈 Reservas últimos 7 dias (para tabela / gráfico simples)
+        // Reservas últimos 7 dias
         $reservationsLast7Days = Reservation::selectRaw('date, COUNT(*) as total')
             ->whereBetween('date', [$sevenDaysAgo, $today])
             ->groupBy('date')
@@ -40,7 +40,7 @@ class DashboardController extends Controller
                 ];
             });
 
-        // 🎟️ Próximos eventos com percentagem de ocupação
+        // Próximos eventos
         $upcomingEvents = Event::where('is_active', true)
             ->whereDate('date', '>=', $today)
             ->orderBy('date')
@@ -48,7 +48,6 @@ class DashboardController extends Controller
             ->take(5)
             ->get()
             ->map(function (Event $event) {
-                // pessoas já reservadas para este evento
                 $currentPeople = Reservation::where('event_id', $event->id)
                     ->whereIn('status', ['pending', 'confirmed', 'seated'])
                     ->sum('num_people');

@@ -125,7 +125,6 @@
                 </div>
             </div>
 
-            {{-- ✅ Guardar resumo no localStorage (premium) --}}
             <script>
                 (function () {
                     const summary = @json(session('reservation_summary'));

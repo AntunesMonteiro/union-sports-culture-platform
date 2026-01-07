@@ -24,7 +24,7 @@ class Block extends Model
         'end_time'   => 'datetime:H:i',
     ];
 
-    // 🔗 Bloqueio pertence a um utilizador (quem criou)
+    // Bloqueio pertence a quem criou
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

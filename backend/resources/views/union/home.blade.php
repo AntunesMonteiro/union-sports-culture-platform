@@ -4,7 +4,6 @@
 
 @section('content')
 
-  <!-- HERO -->
   <section class="uc-hero" id="topo">
     <div class="uc-hero-bg">
       <img

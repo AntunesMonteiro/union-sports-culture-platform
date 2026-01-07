@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Usamos hasColumn para evitar erros de "duplicate column"
+        // hasColumn para evitar erros de "duplicate column"
         Schema::table('events', function (Blueprint $table) {
             if (!Schema::hasColumn('events', 'description')) {
                 $table->text('description')->nullable()->after('title');
@@ -39,7 +39,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('events', function (Blueprint $table) {
-            // No down também protegemos com hasColumn para evitar erros
+            // proteger no down com hasColumn para evitar erros
             if (Schema::hasColumn('events', 'description')) {
                 $table->dropColumn('description');
             }

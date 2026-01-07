@@ -16,7 +16,7 @@ use Illuminate\Support\Carbon;
 
 class ReservationController extends Controller
 {
-    // 🌐 Formulário público de nova reserva
+    // Formulário de reserva
     public function create()
     {
         // (opcional) podes filtrar por mesas ativas
@@ -32,7 +32,7 @@ class ReservationController extends Controller
         return view('reservations.create', compact('tables', 'events'));
     }
 
-    // 🌐 Submissão do formulário público
+    // Submissão do formulário 
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -47,7 +47,7 @@ class ReservationController extends Controller
             'notes'           => 'nullable|string',
         ]);
 
-        // Regra de negócio: tem de escolher mesa OU evento
+        // Escolher mesa ou evento
         if (empty($validated['table_id']) && empty($validated['event_id'])) {
             return back()
                 ->withInput()
@@ -56,7 +56,7 @@ class ReservationController extends Controller
                 ]);
         }
 
-        // ✅ Validar horário vs dia da semana (segurança + UX)
+        // Validar horário vs dia da semana 
         $date = Carbon::parse($validated['date']);
         $time = Carbon::createFromFormat('H:i', $validated['time']);
 
@@ -77,7 +77,7 @@ class ReservationController extends Controller
             $close = Carbon::createFromFormat('H:i', '23:00');
         }
 
-        // última reserva (UX + operação): 22:30
+        // última reserva
         $last = Carbon::createFromFormat('H:i', '22:30');
 
         if ($time->lt($open) || $time->gt($close) || $time->gt($last)) {
@@ -88,8 +88,7 @@ class ReservationController extends Controller
                 ]);
         }
 
-        // 🧱 Validar bloqueios (global + por zona)
-        // Se houver mesa, usamos a zona da mesa; senão validamos bloqueios globais
+        // Validar bloqueios (global + por zona)
         $zoneToCheck = 'global';
 
         $selectedTable = null;
@@ -100,12 +99,11 @@ class ReservationController extends Controller
 
         $hasBlock = Block::whereDate('date', $date->toDateString())
             ->where(function ($q) use ($zoneToCheck) {
-                // bloqueios globais sempre se aplicam
+                // Bloqueios globais 
                 $q->where('zone', 'global');
 
-                // e bloqueios específicos da zona (se não for global)
+                // Bloqueios específicos
                 if (!empty($zoneToCheck) && $zoneToCheck !== 'global') {
-                    // blocks não tem "outro"
                     if (in_array($zoneToCheck, ['interior', 'esplanada', 'palco'], true)) {
                         $q->orWhere('zone', $zoneToCheck);
                     }
@@ -124,7 +122,7 @@ class ReservationController extends Controller
                 ]);
         }
 
-        // 🪑 Prevenir double booking de mesas (mesma mesa, data e hora)
+        // Prevenir double booking de mesas (mesma mesa, data e hora)
         if (!empty($validated['table_id'])) {
             $exists = Reservation::where('table_id', $validated['table_id'])
                 ->whereDate('date', $date->toDateString())
@@ -150,7 +148,7 @@ class ReservationController extends Controller
             }
         }
 
-        // 🎟️ Se a reserva for para um evento, validar capacidade
+        // Se a reserva for para um evento, validar capacidade
         if (!empty($validated['event_id'])) {
             $event = Event::findOrFail($validated['event_id']);
 
@@ -176,10 +174,10 @@ class ReservationController extends Controller
         $validated['status']  = 'pending';
         $validated['source']  = 'website';
 
-        // 🔹 Criar reserva
+        // Criar reserva
         $reservation = Reservation::create($validated);
 
-        // 🔹 Enviar audit log para Node (Mongo) — criação
+        // Enviar audit log para Node (Mongo)
         $this->sendAuditLogSafe([
             'reservation_id' => $reservation->id,
             'action' => 'reservation_created',
@@ -194,7 +192,7 @@ class ReservationController extends Controller
             ],
         ]);
 
-        // 🔹 Enviar email de "pedido recebido" (se o cliente indicou email)
+        // Enviar email de "pedido recebido"
         if ($reservation->customer_email) {
             try {
                 Mail::to($reservation->customer_email)
@@ -227,7 +225,7 @@ class ReservationController extends Controller
             }
         }
 
-        // 🔹 Resumo para o feedback
+        // Resumo para o feedback
         $tableName  = optional($reservation->table)->name;
         $eventTitle = optional($reservation->event)->title;
 
@@ -244,20 +242,19 @@ class ReservationController extends Controller
                 'table_name'     => $tableName,
                 'event_title'    => $eventTitle,
                 'notes'          => $reservation->notes,
-                'status'         => $reservation->status, // pending
+                'status'         => $reservation->status, 
             ]);
     }
 
-    // 🔒 Backoffice: lista de reservas com filtros
+    // Lista de reservas com filtros
     public function index(Request $request)
     {
-        $selectedDate    = $request->input('date');      // ✅ sem default (mostra todas ao abrir)
+        $selectedDate    = $request->input('date');      
         $selectedEventId = $request->input('event_id');
         $selectedStatus  = $request->input('status');
 
         $query = Reservation::with(['table', 'event']);
 
-        // ✅ Só filtra por data se o utilizador escolher
         if (!empty($selectedDate)) {
             $query->whereDate('date', $selectedDate);
         }
@@ -297,7 +294,7 @@ class ReservationController extends Controller
         ]);
     }
 
-    // 🔒 Backoffice: atualizar estado da reserva
+    // Atualizar estado da reserva
     public function updateStatus(Request $request, Reservation $reservation)
     {
         $validated = $request->validate([
@@ -309,7 +306,7 @@ class ReservationController extends Controller
         $reservation->status = $validated['status'];
         $reservation->save();
 
-        // 🔹 Audit log: mudança de estado
+        // Mudança de estado
         $this->sendAuditLogSafe([
             'reservation_id' => $reservation->id,
             'action' => 'status_changed',
@@ -323,7 +320,7 @@ class ReservationController extends Controller
             ],
         ]);
 
-        // 🔹 Se passou a "confirmed" e tem email, enviar notificação
+        // "confirmado" + email, enviar notificação
         if (
             $oldStatus !== 'confirmed'
             && $reservation->status === 'confirmed'
@@ -365,7 +362,7 @@ class ReservationController extends Controller
             ->with('success', 'Estado atualizado com sucesso.');
     }
 
-    // 🔒 Backoffice: histórico da reserva (logs no Mongo via Node API)
+    // Histórico da reserva (logs no Mongo via Node API)
     public function history(Reservation $reservation)
     {
         $logs = [];
@@ -422,20 +419,18 @@ class ReservationController extends Controller
             'error' => null,
         ]);
     }
-
-    /**
-     * Envia logs para o Node API (Mongo) sem quebrar o fluxo da aplicação.
-     */
+    
+    //Envia logs para o Node API (Mongo) sem quebrar o fluxo da aplicação.
     private function sendAuditLogSafe(array $payload): void
     {
         $baseUrl = env('NODE_API_URL');
         if (!$baseUrl) {
-            return; // se não estiver configurado, ignora silenciosamente
+            return; 
         }
 
         $apiKey = env('NODE_API_KEY');
         if (!$apiKey) {
-            return; // sem chave, não envia
+            return; // sem KEY não envia
         }
 
         try {

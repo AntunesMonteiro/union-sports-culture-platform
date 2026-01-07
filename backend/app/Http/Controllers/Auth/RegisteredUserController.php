@@ -12,11 +12,8 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
 
-class RegisteredUserController extends Controller
-{
-    /**
-     * Display the registration view.
-     */
+class RegisteredUserController extends Controller{
+    
     public function create(): View
     {
         return view('auth.register');

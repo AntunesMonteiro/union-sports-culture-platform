@@ -46,7 +46,7 @@ class EventController extends Controller
     $imagePath = $request->file('image')->store('events', 'public');
     }
 
-    // gera um slug único com base no título + timestamp
+    // Slug único com base no título + timestamp
     $slug = Str::slug($validated['title']) . '-' . now()->format('YmdHis');
 
     Event::create([

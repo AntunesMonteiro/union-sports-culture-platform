@@ -50,7 +50,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/admin/reservas/{reservation}/estado', [ReservationController::class, 'updateStatus'])
         ->name('reservations.updateStatus');
 
-    // ✅ NOVO: histórico (audit logs via Node API + Mongo)
+    // Histórico (audit logs via Node API + Mongo)
     Route::get('/admin/reservas/{reservation}/historico', [ReservationController::class, 'history'])
         ->name('reservations.history');
 });

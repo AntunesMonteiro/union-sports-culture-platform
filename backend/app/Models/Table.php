@@ -21,7 +21,7 @@ class Table extends Model
         'is_active' => 'boolean',
     ];
 
-    // 🔗 Uma mesa pode ter muitas reservas
+    // Uma mesa pode ter muitas reservas
     public function reservations()
     {
         return $this->hasMany(Reservation::class);
